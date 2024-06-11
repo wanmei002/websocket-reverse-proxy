@@ -1,0 +1,8 @@
+syntax = "proto3";
+package messages.v1;
+option go_package="github.com/wanmei002/websocket-reverse-proxy/gen/golang/wanmei002/messages/v1;messages";
+
+message ClientSendMessage{
+  string request_id = 1;
+  string message = 2;
+}

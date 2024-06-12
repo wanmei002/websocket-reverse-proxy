@@ -1,40 +1,48 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"log"
-	"net/url"
+	"github.com/wanmei002/websocket-reverse-proxy/tcp_server"
+	"net"
+	"os"
 	"time"
 )
 
 func main() {
-	wsUrl := url.URL{
-		Scheme: "ws",
-		Host:   "127.0.0.1:8099",
-		Path:   "/ws",
-	}
-	log.Printf("connecting to %s", wsUrl.String())
-	c, _, err := websocket.DefaultDialer.Dial(wsUrl.String(), nil)
+	dialer, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp_server.Port))
 	if err != nil {
 		panic(err)
 	}
-	tk := time.NewTicker(time.Second * 120)
-	defer tk.Stop()
-	var i int
-	for {
-		select {
-		case <-tk.C:
-			log.Printf("time end")
-			return
-		default:
-			err = c.WriteMessage(websocket.BinaryMessage, []byte(fmt.Sprintf("hello world %d", i)))
-			if err != nil {
-				panic(err)
-			}
-			log.Printf("send %d\n", i)
-			time.Sleep(time.Second * 1)
-			i++
+
+	defer dialer.Close()
+	args := os.Args
+	if len(args) < 2 {
+		panic("please input deviceID")
+	}
+	first := tcp_server.Device{
+		Type: tcp_server.DeviceTypeClient,
+		ID:   "",
+		To:   args[1],
+	}
+
+	sendData, err := json.Marshal(first)
+	if err != nil {
+		panic(err)
+	}
+	_, err = dialer.Write(append(sendData, tcp_server.MessageEnd))
+	if err != nil {
+		panic(err)
+	}
+
+	time.Sleep(1 * time.Second)
+	fmt.Println("start conn")
+	for i := 0; i < 10; i++ {
+		_, err = dialer.Write([]byte(fmt.Sprintf("hello word %d", i)))
+		if err != nil {
+			panic(err)
 		}
+		fmt.Println(i)
+		time.Sleep(1 * time.Second)
 	}
 }

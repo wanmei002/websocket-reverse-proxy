@@ -1,13 +1,24 @@
 package main
 
 import (
-	"github.com/wanmei002/websocket-reverse-proxy/websockets"
-	"net/http"
+	"github.com/wanmei002/websocket-reverse-proxy/proxy"
+	"github.com/wanmei002/websocket-reverse-proxy/tcp_server"
+	"github.com/wanmei002/websocket-reverse-proxy/unixs"
+	"time"
 )
 
 func main() {
-	http.HandleFunc("/ws", websockets.Websocket)
-	err := http.ListenAndServe(":8099", nil)
+	go func() {
+		unixs.UnixListener()
+	}()
+	go func() {
+		err := tcp_server.Run()
+		if err != nil {
+			panic(err)
+		}
+	}()
+	time.Sleep(5 * time.Second)
+	err := proxy.Run()
 	if err != nil {
 		panic(err)
 	}

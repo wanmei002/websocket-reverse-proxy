@@ -54,8 +54,6 @@ func Run() error {
 		return err
 	}
 	fmt.Println("TCP Listening on port ", Port, "; successfully")
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -63,14 +61,12 @@ func Run() error {
 			return err
 		}
 		fmt.Println("tcp new connection")
-		go firstCommunication(conn)
+		go forwardCommunication(conn)
 	}
-
-	wg.Wait()
 	return nil
 }
 
-func firstCommunication(conn net.Conn) error {
+func forwardCommunication(conn net.Conn) error {
 	bufBytes, err := ReadData(conn)
 	if err != nil {
 		return err

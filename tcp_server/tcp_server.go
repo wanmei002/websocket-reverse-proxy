@@ -2,8 +2,10 @@ package tcp_server
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/wanmei002/websocket-reverse-proxy/private_keys"
 	"io"
 	"log"
 	"net"
@@ -33,7 +35,20 @@ type OK struct {
 }
 
 func Run() error {
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
+	ca, err := private_keys.NewCA("127.0.0.1")
+	if err != nil {
+		log.Fatal(err)
+	}
+	serverCA, err := tls.X509KeyPair(ca.CertPem(), ca.KeyPem())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tlsServerConfig := &tls.Config{
+		Certificates: []tls.Certificate{serverCA},
+	}
+
+	listener, err := tls.Listen("tcp", fmt.Sprintf(":%d", Port), tlsServerConfig)
 	if err != nil {
 		log.Printf("Error tcp listening on port %d: %v\n", Port, err)
 		return err

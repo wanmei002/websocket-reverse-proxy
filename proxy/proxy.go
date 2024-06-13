@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,12 +10,11 @@ import (
 	"github.com/wanmei002/websocket-reverse-proxy/tcp_server"
 	"io"
 	"log"
-	"net"
 	"sync"
 )
 
 func Run() error {
-	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp_server.Port))
+	conn, err := tls.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp_server.Port), &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
 		log.Printf("dial tcp failed: %v\n", err)
 		return err

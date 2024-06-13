@@ -1,16 +1,16 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/wanmei002/websocket-reverse-proxy/tcp_server"
-	"net"
 	"os"
 	"time"
 )
 
 func main() {
-	dialer, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp_server.Port))
+	dialer, err := tls.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", tcp_server.Port), &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
 		panic(err)
 	}

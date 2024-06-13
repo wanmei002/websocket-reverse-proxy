@@ -83,14 +83,14 @@ func (ca *CA) generateCertificate(serviceName string) error {
 		IsCA:                  true,
 		DNSNames:              []string{serviceName},
 	}
-	ca.ca, err = x509.CreateCertificate(rand.Reader, &template, &template, ca.publicKey, ca.key)
+	ca.ca, err = x509.CreateCertificate(rand.Reader, &template, &template, &ca.publicKey, ca.key)
 	if err != nil {
 		log.Printf("create certificate err: %s\n", err)
 		return err
 	}
 	ca.keyPem = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(ca.key)})
 	ca.certPem = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca.ca})
-	fmt.Println(ca.keyPem)
-	fmt.Println(ca.certPem)
+	fmt.Println(string(ca.keyPem))
+	fmt.Println(string(ca.certPem))
 	return nil
 }

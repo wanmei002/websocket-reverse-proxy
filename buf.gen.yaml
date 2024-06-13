@@ -10,11 +10,11 @@ plugins:
     opt:
       - paths=source_relative
 
-#  - plugin: buf.build/grpc-ecosystem/gateway
-#    out: generated/golang
-#    opt:
-#      - paths=source_relative
-#      - allow_delete_body=true
+  - plugin: buf.build/grpc-ecosystem/gateway
+    out: gen/golang
+    opt:
+      - paths=source_relative
+      - allow_delete_body=true
 
   - plugin: buf.build/bufbuild/validate-go
     out: gen/golang

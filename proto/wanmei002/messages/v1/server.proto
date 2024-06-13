@@ -1,0 +1,27 @@
+syntax = "proto3";
+package messages.v1;
+option go_package="github.com/wanmei002/websocket-reverse-proxy/gen/golang/wanmei002/messages/v1;messages";
+
+import "google/protobuf/empty.proto";
+import "google/api/client.proto";
+import "google/api/annotations.proto";
+
+message GetAddressResponse {
+  string address = 1;
+}
+
+service Foo {
+  rpc GetServerAddress(google.protobuf.Empty) returns (GetAddressResponse) {
+    option (google.api.http) = {
+      get: "/foo/api/v1/get_address"
+    };
+  };
+}
+
+service Bar {
+  rpc GetAddress(google.protobuf.Empty) returns (GetAddressResponse) {
+    option (google.api.http) = {
+      get: "/bar/api/v1/get_address"
+    };
+  };
+}

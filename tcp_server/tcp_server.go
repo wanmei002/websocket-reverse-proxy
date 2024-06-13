@@ -71,35 +71,12 @@ func Run() error {
 }
 
 func firstCommunication(conn net.Conn) error {
-	buffer := bytes.NewBuffer([]byte{})
-	buf := make([]byte, 1024)
-Loop:
-	for {
-		l, err := conn.Read(buf)
-		if err != nil {
-			log.Printf("1Error reading from connection: %v\n", err)
-			if err != io.EOF {
-				return err
-			}
-		}
-		fmt.Println("server read:", string(buf))
-		for i, v := range buf {
-			if v == MessageEnd {
-				_, err = buffer.Write(buf[:i])
-				if err != nil {
-					log.Printf("2Error reading from connection: %v\n", err)
-					if err != io.EOF {
-						return err
-					}
-				}
-				break Loop
-			}
-		}
-		buffer.Write(buf[:l])
+	bufBytes, err := ReadData(conn)
+	if err != nil {
+		return err
 	}
-
 	device := &Device{}
-	err := json.Unmarshal(buffer.Bytes(), device)
+	err = json.Unmarshal(bufBytes, device)
 	if err != nil {
 		log.Printf("Error unmarshalling json: %v\n", err)
 		return err
@@ -120,9 +97,20 @@ Loop:
 
 func client(deviceID string, conn net.Conn) error {
 	toConn := GetConn(deviceID)
+	successCode := 0
 	if toConn == nil {
-		return fmt.Errorf("no connection found for device %s", deviceID)
+		successCode = -1
 	}
+	sendData, _ := json.Marshal(OK{Code: successCode})
+	_, err := conn.Write(append(sendData, MessageEnd))
+	if err != nil {
+		log.Printf("Error writing to connection: %v\n", err)
+	}
+	if successCode < 0 {
+		conn.Close()
+		return err
+	}
+
 	go func() {
 		_, err := io.Copy(toConn, conn)
 		if err != nil {
@@ -171,4 +159,26 @@ func GetConn(id string) net.Conn {
 	defer connMapLock.RUnlock()
 
 	return connMap[id]
+}
+
+func ReadData(conn net.Conn) ([]byte, error) {
+	buffer := bytes.NewBuffer([]byte{})
+Loop:
+	for {
+		buf := make([]byte, 1024)
+		l, err := conn.Read(buf)
+		if err != nil {
+			log.Printf("read first write failed: %v\n", err)
+			return nil, err
+		}
+		for i, v := range buf {
+			if v == MessageEnd {
+				buffer.Write(buf[:i])
+				break Loop
+			}
+		}
+		buffer.Write(buf[:l])
+	}
+
+	return buffer.Bytes(), nil
 }

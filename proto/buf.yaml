@@ -3,7 +3,7 @@ name: buf.build/expvent/everai-proxy
 
 deps:
   - buf.build/googleapis/googleapis
-#  - buf.build/grpc-ecosystem/grpc-gateway
+  - buf.build/grpc-ecosystem/grpc-gateway
   - buf.build/envoyproxy/protoc-gen-validate
 #  - buf.build/grpc-ecosystem/openapiv2
 lint:

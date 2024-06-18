@@ -3,7 +3,9 @@ package bar
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/wanmei002/websocket-reverse-proxy/gen/golang/wanmei002/messages/v1"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"net"
 )
@@ -17,6 +19,7 @@ func New() *Service {
 }
 
 func (svc *Service) GetAddress(ctx context.Context, in *emptypb.Empty) (*messages.GetAddressResponse, error) {
+	fmt.Println("bar trace:", trace.SpanFromContext(ctx).SpanContext().TraceID().String())
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return nil, err

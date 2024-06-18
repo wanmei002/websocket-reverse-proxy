@@ -1,4 +1,9 @@
-.PHONY: build-linux upload build-linux-client upload-client  buf
+.PHONY: build-linux upload build-linux-client upload-client  buf build
+
+build:
+	go build -o foo main.go
+	go build -o bar main2.go
+	go build -o gin main3.go
 
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o proxy-linux main.go

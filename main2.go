@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	server.FooRun()
+	server.BarRun()
 
 	signals := make(chan os.Signal, 3)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)

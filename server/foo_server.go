@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/wanmei002/websocket-reverse-proxy/gen/golang/wanmei002/messages/v1"
 	"github.com/wanmei002/websocket-reverse-proxy/server/foo"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -14,7 +16,11 @@ import (
 )
 
 func FooRun() {
-	svr := grpc.NewServer()
+	UnaryServerInterceptorOtelp("foo")
+	svr := grpc.NewServer(
+		//grpc.UnaryInterceptor(UnaryServerInterceptorOtelp("foo")),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	fooSvc, err := foo.New()
 	if err != nil {
 		panic(err)
@@ -27,7 +33,11 @@ func FooRun() {
 		log.Fatalf("foo failed to listen: %v", err)
 	}
 
-	grpcConn, err := grpc.NewClient("127.0.0.1:21113", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcConn, err := grpc.NewClient(
+		"127.0.0.1:21113",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,6 +59,7 @@ func FooRun() {
 		Handler: mux,
 	}
 	go func() {
+		fmt.Println("foo run")
 		err = httpSvc.ListenAndServe()
 		if err != nil {
 			log.Fatalf("foo failed to listen: %v", err)

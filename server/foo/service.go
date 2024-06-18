@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/wanmei002/websocket-reverse-proxy/gen/golang/wanmei002/messages/v1"
-	"github.com/wanmei002/websocket-reverse-proxy/reverse_dialer"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -17,9 +19,11 @@ type Service struct {
 
 func New() (*Service, error) {
 	conn, err := grpc.NewClient(
-		fmt.Sprintf("passthrough:%s", "device-01"),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(reverse_dialer.Dialer()),
+		fmt.Sprintf("passthrough:%s", "127.0.0.1:9003"),
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return nil, err
@@ -30,5 +34,9 @@ func New() (*Service, error) {
 }
 
 func (svc *Service) GetServerAddress(ctx context.Context, in *emptypb.Empty) (*messages.GetAddressResponse, error) {
+	fmt.Printf("foo ctx: %+v\n", ctx)
+	fmt.Printf("foo ctx traceparent: %+v\n", ctx.Value("traceparent"))
+	metadata.FromIncomingContext()
+	fmt.Println("foo trace:", trace.SpanFromContext(ctx).SpanContext().TraceID().String())
 	return svc.barClient.GetAddress(ctx, in)
 }

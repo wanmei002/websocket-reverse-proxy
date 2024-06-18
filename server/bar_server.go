@@ -1,42 +1,32 @@
 package server
 
 import (
+	"fmt"
 	"github.com/wanmei002/websocket-reverse-proxy/gen/golang/wanmei002/messages/v1"
-	"github.com/wanmei002/websocket-reverse-proxy/proxy"
 	"github.com/wanmei002/websocket-reverse-proxy/server/bar"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
-	"os"
 )
 
-var sockPath = "/home/ubuntu/bar.sock"
-
 func BarRun() {
-	svr := grpc.NewServer()
+	UnaryServerInterceptorOtelp("bar")
+	svr := grpc.NewServer(
+		//grpc.UnaryInterceptor(UnaryServerInterceptorOtelp("bar")),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	messages.RegisterBarServer(svr, bar.New())
 	reflection.Register(svr)
-	os.Remove(sockPath)
-	lis, err := net.Listen("unix", sockPath)
+	lis, err := net.Listen("tcp", ":9003")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	go func() {
+		fmt.Println("bar run")
 		if err := svr.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
-		}
-	}()
-
-	unixConn, err := net.Dial("unix", sockPath)
-	if err != nil {
-		log.Fatalf("failed to dial unix: %v", err)
-	}
-
-	go func() {
-		err = proxy.Run("device-01", unixConn)
-		if err != nil {
-			log.Fatalf("failed to proxy: %v", err)
 		}
 	}()
 
